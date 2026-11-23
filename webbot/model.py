@@ -24,11 +24,11 @@ class RoPE(nn.Module):
     def forward(self, x, offset=0):
         batch_size, num_head, context_len, key_dim = x.shape
 
-        # 入力の型を保存し、float32で計算
+        # 中文注释：、float32
         input_dtype = x.dtype
         x = x.float()
 
-        # offsetを考慮して位置エンコーディングを取得
+        # 中文注释：offsetー
         max_context_len = self.cos_cache.size(0)
         if offset + context_len > max_context_len:
             offset = max_context_len - context_len
@@ -45,7 +45,7 @@ class RoPE(nn.Module):
         out = torch.stack([x_rot_even, x_rot_odd], dim=-1)
         out = out.reshape(batch_size, num_head, context_len, key_dim)
 
-        return out.to(input_dtype)  # 元の型に戻す
+        return out.to(input_dtype)  # 中文注释：请结合相邻代码理解此步骤
 
 
 class MultiHeadAttention(nn.Module):
@@ -63,7 +63,7 @@ class MultiHeadAttention(nn.Module):
 
         self.rope = rope
 
-        # KV-Cache用の変数
+        # 中文注释：KV-Cache
         self.k_cache = None
         self.v_cache = None
         self.cache_offset = 0
@@ -77,7 +77,7 @@ class MultiHeadAttention(nn.Module):
         V = self.W_v(x).view(B, C, KV, D).transpose(1, 2)   # (B, KV, C, D)
 
 
-        # RoPEにoffsetを渡す
+        # 中文注释：RoPEoffset
         if self.rope is not None:
             if use_cache:
                 Q = self.rope(Q, self.cache_offset)
@@ -86,9 +86,9 @@ class MultiHeadAttention(nn.Module):
                 Q = self.rope(Q)
                 K = self.rope(K)
 
-        # KV-Cacheの処理
+        # 中文注释：KV-Cache
         if use_cache:
-            # 初回かどうかを判定（キャッシュ更新前に）
+            # 中文注释：（）
             is_first_call = (self.k_cache is None)
 
             if is_first_call:
@@ -100,7 +100,7 @@ class MultiHeadAttention(nn.Module):
 
             self.cache_offset += C
 
-            # コンテキスト長制限: キャッシュが長すぎる場合は古い部分を切り捨て
+            # 中文注释：:
             max_cache_len = self.rope.cos_cache.size(0) if self.rope else 2048
             if self.k_cache.size(2) > max_cache_len:
                 self.k_cache = self.k_cache[:, :, -max_cache_len:]
@@ -110,15 +110,15 @@ class MultiHeadAttention(nn.Module):
             K = self.k_cache
             V = self.v_cache
 
-        # Flash Attention（GQA対応）
+        # 中文注释：Flash Attention（GQA）
         if use_cache:
-            # Prefill（初回・プロンプト全体処理）: is_causal=True（各トークンは前方のみ）
-            # Decode（2回目以降・1トークン生成）: is_causal=False（新トークンは全キャッシュにattend）
+            # 中文注释：Prefill（・）: is_causal=True（）
+            # 中文注释：Decode（2・1）: is_causal=False（attend）
             is_causal = is_first_call
             hidden = F.scaled_dot_product_attention(Q, K, V, is_causal=is_causal,
                                                     enable_gqa=True)
         else:
-            # 学習時: is_causal=Trueでcausal mask適用
+            # 中文注释：: is_causal=Truecausal mask
             hidden = F.scaled_dot_product_attention(Q, K, V, is_causal=True,
                                                     enable_gqa=True)
 
@@ -128,7 +128,7 @@ class MultiHeadAttention(nn.Module):
         return output
 
     def clear_cache(self):
-        """キャッシュをクリアする"""
+        """清空缓存。"""
         self.k_cache = None
         self.v_cache = None
         self.cache_offset = 0
@@ -167,7 +167,7 @@ class Block(nn.Module):
         return x
 
     def clear_cache(self):
-        """キャッシュをクリアする"""
+        """清空缓存。"""
         self.attn.clear_cache()
 
 
@@ -264,15 +264,15 @@ if __name__ == "__main__":
     ff_dim = 2048
     theta = 10000
 
-    # モデルを作成
+    # 中文注释：请结合相邻代码理解此步骤
     model = GPT(vocab_size, max_context_len, embed_dim, n_head,
                 n_kv_head, n_layer, ff_dim, theta)
 
-    # パラメータ数を表示
+    # 中文注释：请结合相邻代码理解此步骤
     num_params = sum(p.numel() for p in model.parameters())
     print(f"パラメータ数: {num_params:,} ({num_params/1e6:.1f}M)")
 
-    # 動作テスト
+    # 中文注释：请结合相邻代码理解此步骤
     dummy_input = torch.randint(0, vocab_size, (1, max_context_len))
     logits = model(dummy_input)
     print(f"出力形状: {logits.shape}")

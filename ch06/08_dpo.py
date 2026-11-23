@@ -13,14 +13,14 @@ from storybot.model import GPT
 from storybot.tokenizer import BPETokenizer
 from storybot.utils import get_device
 
-# 設定
+# 中文注释：请结合相邻代码理解此步骤
 device = get_device()
 data_path = 'storybot/tiny_stories_dpo.json'
 tokenizer_path = 'storybot/merge_rules.pkl'
 pretrain_model_path = 'storybot/model_pretrain.pt'
 dpo_model_save_path = 'storybot/model_dpo.pt'
 
-# ハイパーパラメータ
+# 中文注释：ー
 context_len = 256
 batch_size = 8
 learning_rate = 5e-6
@@ -29,7 +29,7 @@ max_iters = 1000
 
 
 class DPODataset(Dataset):
-    # コンストラクタ
+    # 中文注释：请结合相邻代码理解此步骤
     def __init__(self, data_path, tokenizer, context_len):
         self.tokenizer = tokenizer
         self.context_len = context_len
@@ -42,7 +42,7 @@ class DPODataset(Dataset):
             sample = self._create_sample(item['prompt'], item['chosen'], item['rejected'])
             self.samples.append(sample)
 
-    # パディングとマスクの作成
+    # 中文注释：请结合相邻代码理解此步骤
     def _pad_and_mask(self, ids, prompt_len):
         mask = [0] * prompt_len + [1] * (len(ids) - prompt_len)
 
@@ -56,7 +56,7 @@ class DPODataset(Dataset):
 
         return ids, mask
 
-    # サンプル作成
+    # 中文注释：请结合相邻代码理解此步骤
     def _create_sample(self, prompt, chosen, rejected):
         prompt_ids = self.tokenizer.encode(prompt)
         chosen_ids = prompt_ids + self.tokenizer.encode(chosen)
@@ -68,7 +68,7 @@ class DPODataset(Dataset):
 
         return chosen_ids, chosen_mask, rejected_ids, rejected_mask
 
-    # DataLoader用メソッド
+    # 中文注释：DataLoader
     def __len__(self):
         return len(self.samples)
 
@@ -90,17 +90,17 @@ def get_sequence_logprobs(model, ids, mask):
     per_token_logprobs = torch.gather(
         log_probs, dim=-1, index=labels.unsqueeze(-1)
     ).squeeze(-1)  # (B, C-1)
-    # マスクを適用（応答部分のみ）
+    # 中文注释：（）
     masked_logprobs = per_token_logprobs * mask[:, 1:]
     return masked_logprobs.sum(dim=-1)  # (B,)
 
 
 def compute_dpo_loss(model, ref_model, chosen_ids, chosen_mask, rejected_ids, rejected_mask, beta):
-    # 現在のモデルのlog-prob
+    # 中文注释：log-prob
     chosen_logprobs = get_sequence_logprobs(model, chosen_ids, chosen_mask)
     rejected_logprobs = get_sequence_logprobs(model, rejected_ids, rejected_mask)
 
-    # 参照モデルのlog-prob
+    # 中文注释：log-prob
     with torch.no_grad():
         ref_chosen_logprobs = get_sequence_logprobs(ref_model, chosen_ids, chosen_mask)
         ref_rejected_logprobs = get_sequence_logprobs(ref_model, rejected_ids, rejected_mask)
@@ -113,18 +113,18 @@ def compute_dpo_loss(model, ref_model, chosen_ids, chosen_mask, rejected_ids, re
     return -F.logsigmoid(logits).mean()
 
 
-# トークナイザとデータセットの準備
+# 中文注释：ー
 tokenizer = BPETokenizer.load_from(tokenizer_path)
 dataset = DPODataset(data_path, tokenizer, context_len)
 dataloader = DataLoader(dataset, batch_size=batch_size, shuffle=True)
 
-# モデルとオプティマイザ
+# 中文注释：请结合相邻代码理解此步骤
 model = GPT.load_from(pretrain_model_path, device=device)
 ref_model = GPT.load_from(pretrain_model_path, device=device)
 ref_model.eval()
 optimizer = torch.optim.AdamW(model.parameters(), lr=learning_rate)
 
-# 学習ループ
+# 中文注释：ー
 losses = []
 data_iter = cycle(dataloader)
 pbar = tqdm(range(max_iters))
@@ -148,7 +148,7 @@ for i in pbar:
     losses.append(loss.item())
     pbar.set_postfix({'loss': f'{loss.item():.4f}'})
 
-# 結果を保存
+# 中文注释：请结合相邻代码理解此步骤
 plt.figure(figsize=(10, 6))
 plt.plot(losses)
 plt.xlabel('Iteration')

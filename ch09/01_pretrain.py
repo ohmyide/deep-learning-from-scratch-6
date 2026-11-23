@@ -15,7 +15,7 @@ from webbot.model import GPT
 from webbot.utils import get_device
 
 
-# --- DDP初期化 ---
+# 中文注释：--- DDP ---
 ddp = int(os.environ.get('RANK', -1)) != -1
 if ddp:
     dist.init_process_group(backend='nccl')
@@ -31,17 +31,17 @@ else:
 is_main = (not ddp) or (local_rank == 0)
 torch.manual_seed(42 + seed_offset)
 
-# --- wandb初期化（rank 0のみ） ---
+# 中文注释：--- wandb（rank 0） ---
 if is_main:
-    wandb.init(project='webbot-pretrain', config={})  # configは後で更新
+    wandb.init(project='webbot-pretrain', config={})  # 中文注释：config
 
 
 def get_lr(it, max_lr, warmup_iters, max_iters):
-    # ウォームアップ: 0 -> max_lr
+    # 中文注释：ー: 0 -> max_lr
     if it < warmup_iters:
         return max_lr * (it / warmup_iters)
 
-    # 線形減衰: max_lr -> 0
+    # 中文注释：: max_lr -> 0
     if it < max_iters:
         progress = (it - warmup_iters) / (max_iters - warmup_iters)
         return max_lr * (1.0 - progress)
@@ -65,7 +65,7 @@ def get_batch(data, context_len, batch_size, device, random=True, offset=0):
 
 
 def evaluate(model, val_data, context_len, batch_size, device):
-    """Validation: 全データを順番に処理"""
+    """Validation：按顺序处理全部数据。"""
     model.eval()
     total_loss = 0.0
     total_tokens = 0
@@ -94,7 +94,7 @@ def evaluate(model, val_data, context_len, batch_size, device):
     model.train()
     return total_loss / total_tokens
 
-# --- ハイパーパラメータ ---
+# 中文注释：--- ー ---
 vocab_size = 50000
 context_len = 1024
 embed_dim = 768
@@ -112,7 +112,7 @@ max_iters = 100000
 grad_clip = 1.0
 eval_interval = 1000
 
-# --- wandb configを更新 ---
+# 中文注释：--- wandb config ---
 if is_main:
     wandb.config.update({
         'vocab_size': vocab_size, 'context_len': context_len,
@@ -125,7 +125,7 @@ if is_main:
         'max_iters': max_iters, 'grad_clip': grad_clip,
     })
 
-# --- データ ---
+# 中文注释：---  ---
 train_data_path = 'webbot/owt_train.bin'
 val_data_path = 'webbot/owt_valid.bin'
 model_save_path = 'webbot/model_pretrain.pt'
@@ -137,7 +137,7 @@ if is_main:
     print(f"学習データ: {len(train_data):,} tokens")
     print(f"検証データ: {len(val_data):,} tokens")
 
-# --- モデル ---
+# 中文注释：---  ---
 model = GPT(
     vocab_size, context_len, embed_dim, n_head,
     n_kv_head, n_layer, ff_dim, theta
@@ -152,24 +152,24 @@ model = torch.compile(model)
 if ddp:
     model = DDP(model, device_ids=[local_rank])
 
-# --- オプティマイザ ---
+# 中文注释：---  ---
 optimizer = torch.optim.AdamW(model.parameters(), lr=learning_rate)
 
-# --- 学習ループ ---
+# 中文注释：--- ー ---
 pbar = tqdm(range(max_iters), disable=not is_main)
 val_loss = float('inf')
 val_losses = []
 val_iters = []
 
 for step in pbar:
-    # 学習率を更新
+    # 中文注释：请结合相邻代码理解此步骤
     lr = get_lr(step, learning_rate, warmup_iters, max_iters)
     for param_group in optimizer.param_groups:
         param_group['lr'] = lr
 
     optimizer.zero_grad()
 
-    # 勾配蓄積ループ
+    # 中文注释：ー
     for micro_step in range(accumulation_steps):
         batch_x, batch_y = get_batch(train_data, context_len,
                                      micro_batch_size, device)
@@ -180,7 +180,7 @@ for step in pbar:
                                    batch_y.view(-1))
             loss = loss / accumulation_steps
 
-        # DDP: 最後のmicro_step以外は勾配同期を無効化
+        # 中文注释：DDP: micro_step
         if ddp and micro_step < accumulation_steps - 1:
             with model.no_sync():
                 loss.backward()
@@ -190,12 +190,12 @@ for step in pbar:
     torch.nn.utils.clip_grad_norm_(model.parameters(), grad_clip)
     optimizer.step()
 
-    # wandb: 毎ステップのログ
+    # 中文注释：wandb:
     train_loss = loss.item() * accumulation_steps
     if is_main:
         wandb.log({'train/loss': train_loss, 'train/lr': lr}, step=step)
 
-    # 定期的に評価
+    # 中文注释：请结合相邻代码理解此步骤
     if is_main and ((step % eval_interval) == 0 or step == max_iters - 1):
         raw_model = model.module if ddp else model
         val_loss = evaluate(raw_model, val_data, context_len,
@@ -210,7 +210,7 @@ for step in pbar:
         pbar.set_postfix({'loss': f'{train_loss:.4f}',
                           'val_loss': f'{val_loss:.4f}', 'lr': f'{lr:.2e}'})
 
-# --- 学習曲線の保存 ---
+# 中文注释：---  ---
 if is_main:
     plt.figure(figsize=(10, 6))
     plt.plot(val_iters, val_losses)

@@ -11,7 +11,7 @@ from storybot.model import GPT
 from storybot.tokenizer import BPETokenizer
 from storybot.utils import get_device, generate
 
-# 設定
+# 中文注释：请结合相邻代码理解此步骤
 # ==========================================
 client = OpenAI(api_key="your_api_key_here")
 # ==========================================
@@ -19,21 +19,21 @@ device = get_device()
 tokenizer_path = 'storybot/merge_rules.pkl'
 tokenizer = BPETokenizer.load_from(tokenizer_path)
 
-# 比較するモデル
+# 中文注释：请结合相邻代码理解此步骤
 model_paths = {
     'pretrain': 'storybot/model_pretrain.pt',
     'dpo': 'storybot/model_dpo.pt',
 }
 
-# 評価設定
+# 中文注释：请结合相邻代码理解此步骤
 prompt = "Once upon a time"
-num_comparisons = 100  # 比較回数
+num_comparisons = 100  # 中文注释：请结合相邻代码理解此步骤
 max_new_tokens = 150
 temperature = 1.0
 
 
 def compare_stories(client, story_a, story_b):
-    """2つのストーリーを比較し、どちらがよりハッピーエンドかを判定"""
+    """比较两个故事，判断哪一个拥有更圆满的结局。"""
 
     evaluation_prompt = f"""以下の2つの子供向けストーリーを比較し、どちらがよりハッピーエンドかを判定してください。
 
@@ -56,11 +56,11 @@ JSON形式で回答: {{"winner": "A" or "B" or "tie", "reason": "簡潔な理由
     text = response.choices[0].message.content
     return json.loads(text)
 
-# モデルをロード
+# 中文注释：ー
 model_pretrain = GPT.load_from(model_paths['pretrain'], device=device)
 model_dpo = GPT.load_from(model_paths['dpo'], device=device)
 
-# 結果を記録
+# 中文注释：请结合相邻代码理解此步骤
 results = []
 wins = {"pretrain": 0, "dpo": 0, "tie": 0}
 
@@ -69,14 +69,14 @@ for i in range(num_comparisons):
     print(f"Comparison {i+1}/{num_comparisons}")
     print('='*60)
 
-    # 両モデルでストーリーを生成
+    # 中文注释：请结合相邻代码理解此步骤
     story_pretrain = generate(model_pretrain, tokenizer, prompt, max_new_tokens, temperature)
     story_dpo = generate(model_dpo, tokenizer, prompt, max_new_tokens, temperature)
 
     print(f"\n[Pretrain]: {story_pretrain[:100]}...")
     print(f"\n[DPO]: {story_dpo[:100]}...")
 
-    # 位置バイアスを避けるため、ランダムに順序を入れ替え
+    # 中文注释：、
     import random
     if random.random() < 0.5:
         story_a, story_b = story_pretrain, story_dpo
@@ -85,7 +85,7 @@ for i in range(num_comparisons):
         story_a, story_b = story_dpo, story_pretrain
         mapping = {"A": "dpo", "B": "pretrain"}
 
-    # LLM-as-a-Judgeで比較
+    # 中文注释：LLM-as-a-Judge
     judgment = compare_stories(client, story_a, story_b)
 
     winner_label = judgment["winner"]
@@ -106,7 +106,7 @@ for i in range(num_comparisons):
         "reason": judgment["reason"]
     })
 
-# サマリー出力
+# 中文注释：ー
 print("\n" + "="*60)
 print("📊 PAIRWISE COMPARISON RESULTS")
 print("="*60)
@@ -116,7 +116,7 @@ print(f"\n  Pretrain wins: {wins['pretrain']:3d} ({wins['pretrain']/total*100:5.
 print(f"  DPO wins:      {wins['dpo']:3d} ({wins['dpo']/total*100:5.1f}%)")
 print(f"  Ties:          {wins['tie']:3d} ({wins['tie']/total*100:5.1f}%)")
 
-# 勝率（tieを除く）
+# 中文注释：（tie）
 if wins['pretrain'] + wins['dpo'] > 0:
     dpo_winrate = wins['dpo'] / (wins['pretrain'] + wins['dpo']) * 100
     print(f"\n  DPO win rate (excluding ties): {dpo_winrate:.1f}%")

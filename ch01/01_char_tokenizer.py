@@ -1,5 +1,5 @@
 text = "hello世界😁"
-print(list(text))  # ['h', 'e', 'l', 'l', 'o', '世', '界', '😁']
+print(list(text))  # 中文注释：：['h', 'e', 'l', 'l', 'o', '', '', '😁']
 
 print(ord('h'))  # 104
 print(ord('😁'))  # 128513
@@ -20,10 +20,10 @@ class CharTokenizer:
 tokenizer = CharTokenizer()
 text = "hello世界😁"
 
-# エンコード
+# 中文注释：：ー
 ids = tokenizer.encode(text)
 print(ids)  # [104, 101, 108, 108, 111, 19990, 30028, 128513]
 
-# デコード
+# 中文注释：：ー
 decoded = tokenizer.decode(ids)
-print(decoded)  # hello世界😁
+print(decoded)  # 中文注释：：hello😁

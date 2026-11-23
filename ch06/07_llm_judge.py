@@ -11,7 +11,7 @@ from storybot.tokenizer import BPETokenizer
 from storybot.utils import get_device, generate
 
 
-# 設定
+# 中文注释：请结合相邻代码理解此步骤
 # ==========================================
 client = OpenAI(api_key="your_api_key_here")
 # ==========================================
@@ -19,21 +19,21 @@ device = get_device()
 tokenizer_path = 'storybot/merge_rules.pkl'
 tokenizer = BPETokenizer.load_from(tokenizer_path)
 
-# 評価するモデルのパス（イテレーションごとに保存したもの）
+# 中文注释：（ー）
 model_paths = {
     500: 'storybot/model_iter_500.pt',
     5000: 'storybot/model_iter_5000.pt',
     40000: 'storybot/model_pretrain.pt',
 }
 
-# 生成設定
+# 中文注释：请结合相邻代码理解此步骤
 prompt = "<|endoftext|>"
 max_new_tokens = 200
 temperature = 1.0
-num_samples = 10  # 各モデルで生成するサンプル数
+num_samples = 10  # 中文注释：请结合相邻代码理解此步骤
 
 def evaluate_story(client, story):
-    """LLM-as-a-Judgeでストーリーを評価"""
+    """使用 LLM-as-a-Judge 评估故事。"""
 
     evaluation_prompt = f"""以下の子供向けストーリーを2つの観点で1-5点で評価してください。
 
@@ -62,7 +62,7 @@ def evaluate_story(client, story):
     print("=====出力====")
     print(text)
 
-    # response_formatを使えば、パース処理がシンプルになる
+    # 中文注释：response_format、ー
     return json.loads(text)
 
 results = {}
@@ -77,11 +77,11 @@ for iteration, model_path in model_paths.items():
     for i in range(num_samples):
         print(f"\n--- サンプル {i+1} ---")
 
-        # ストーリー生成
+        # 中文注释：请结合相邻代码理解此步骤
         story = generate(model, tokenizer, prompt, max_new_tokens, temperature)
         print(f"Story: {story[:200]}...")
 
-        # LLM-as-a-Judgeで評価
+        # 中文注释：LLM-as-a-Judge
         scores = evaluate_story(client, story)
         print(f"Scores: {scores}")
 
@@ -92,7 +92,7 @@ for iteration, model_path in model_paths.items():
 
     results[iteration] = iteration_results
 
-# サマリー出力
+# 中文注释：ー
 print("\n" + "="*50)
 print("Summary")
 print("="*50)

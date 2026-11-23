@@ -48,50 +48,50 @@ def find_chunk_boundaries(file_path, num_chunks, end_token="<|endoftext|>"):
 
 
         chunk_boundaries = [i * chunk_size for i in range(num_chunks)]
-        chunk_boundaries.append(file_size)  # 最後にファイル終端を追加
+        chunk_boundaries.append(file_size)  # 中文注释：请结合相邻代码理解此步骤
 
-        buffer_size = 4096  # 境界から先読みするバイト数
+        buffer_size = 4096  # 中文注释：请结合相邻代码理解此步骤
 
-        # 境界位置の調整（終了トークンを探す）
+        # 中文注释：（）
         for bi in range(1, len(chunk_boundaries) - 1):
             chunk_position = chunk_boundaries[bi]
-            file.seek(chunk_position)  # 境界の推定位置から開始
+            file.seek(chunk_position)  # 中文注释：请结合相邻代码理解此步骤
 
             while True:
-                buffer = file.read(buffer_size)  # バッファサイズ分を読む
+                buffer = file.read(buffer_size)  # 中文注释：请结合相邻代码理解此步骤
 
-                # ファイル終端に達した場合
+                # 中文注释：请结合相邻代码理解此步骤
                 if buffer == b"":
                     chunk_boundaries[bi] = file_size
                     break
 
-                # 読み取ったチャンクで終了トークンを検索
+                # 中文注释：请结合相邻代码理解此步骤
                 end_position = buffer.find(byte_end_token)
                 if end_position != -1:
-                    # 見つかった場合、その位置を新しい境界とする
+                    # 中文注释：、
                     chunk_boundaries[bi] = chunk_position + end_position
                     break
 
-                # 見つからなかった場合、次のバッファ位置に移動
+                # 中文注释：、
                 chunk_position += buffer_size
 
-    # 重複を除去し、ソートして返す
+    # 中文注释：、ー
     return sorted(set(chunk_boundaries))
 
 def pretoken_chunk(args):
     file_path, start, end, end_token = args
     pretoken_counts = defaultdict(int)
 
-    # ファイルを開いてチャンクを読み込む
+    # 中文注释：请结合相邻代码理解此步骤
     with open(file_path, "rb") as f:
         f.seek(start)
         chunk_byte = f.read(end - start)
         chunk_text = chunk_byte.decode("utf-8", errors="ignore")
 
-        # 特殊トークンで分割
+        # 中文注释：请结合相邻代码理解此步骤
         texts = chunk_text.split(end_token)
 
-        # 各テキストを事前トークン化
+        # 中文注释：请结合相邻代码理解此步骤
         for text in texts:
             for pretoken in pretokenize(text):
                 pretoken_counts[pretoken] += 1
@@ -99,7 +99,7 @@ def pretoken_chunk(args):
     return pretoken_counts
 
 def train_bpe(file_path, vocab_size, end_token="<|endoftext|>", num_processes=8, num_chunks=64):
-    # ステップ1: チャンクの準備
+    # 中文注释：1:
     chunk_boundaries = find_chunk_boundaries(file_path, num_chunks)
     total_chunks = len(chunk_boundaries) - 1
 
@@ -109,53 +109,53 @@ def train_bpe(file_path, vocab_size, end_token="<|endoftext|>", num_processes=8,
         end = chunk_boundaries[i + 1]
         chunk_info_list.append((file_path, start, end, end_token))
 
-    # ステップ2: 並列処理
+    # 中文注释：2:
     with Pool(processes=num_processes) as pool:
         all_results = list(tqdm(pool.imap(pretoken_chunk, chunk_info_list), total=len(chunk_info_list), desc="Pretokenizing"))
 
-    # ステップ3: 結果を統合
+    # 中文注释：3:
     pretoken_counts = defaultdict(int)
     for chunk_result in all_results:
         for pretoken, count in chunk_result.items():
             pretoken_counts[pretoken] += count
 
-    # 事前トークンをID列に変換
+    # 中文注释：ID
     ids_counts = {tuple(pretoken.encode("utf-8")): count for pretoken, count in pretoken_counts.items()}
 
 
     num_merges = vocab_size - 256 - 1
     merge_rules = {}
-    pair_to_ids = defaultdict(set)  # キャッシュ
+    pair_to_ids = defaultdict(set)  # 中文注释：请结合相邻代码理解此步骤
 
     pair_counts = defaultdict(int)
     for ids, count in ids_counts.items():
         count_pairs(ids, count, pair_counts)
-        for pair in zip(ids, ids[1:]):  # キャッシュに登録
+        for pair in zip(ids, ids[1:]):  # 中文注释：请结合相邻代码理解此步骤
             pair_to_ids[pair].add(ids)
 
     for step in tqdm(range(num_merges), desc="Training BPE"):
-        if not pair_counts:  # ペアが存在しない場合の処理
+        if not pair_counts:  # 中文注释：请结合相邻代码理解此步骤
             break
 
-        # 最頻出ペアを選択
+        # 中文注释：请结合相邻代码理解此步骤
         # best_pair = max(pair_counts, key=pair_counts.get)
         best_pair = max(pair_counts, key=lambda pair: (pair_counts[pair], pair[0], pair[1]))
         new_id = 256 + step
         merge_rules[best_pair] = new_id
 
-        # best_pairを含むids列をキャッシュから取得
+        # 中文注释：best_pairids
         affected_ids = pair_to_ids[best_pair]
-        del pair_to_ids[best_pair]  # もう使わないので削除
+        del pair_to_ids[best_pair]  # 中文注释：请结合相邻代码理解此步骤
 
-        # 影響のあるID列だけを更新
+        # 中文注释：ID
         for ids in affected_ids:
             ids_count = ids_counts[tuple(ids)]
             new_ids = merge(ids, best_pair, new_id)
 
-            del ids_counts[tuple(ids)]  # 古いID列を削除
-            ids_counts[tuple(new_ids)] = ids_count  # 新しいID列を追加
+            del ids_counts[tuple(ids)]  # 中文注释：ID
+            ids_counts[tuple(new_ids)] = ids_count  # 中文注释：ID
 
-            # 古いペア頻度を減少
+            # 中文注释：请结合相邻代码理解此步骤
             old_counts = count_pairs(ids)
             for pair, count in old_counts.items():
                 pair_counts[pair] -= count * ids_count
@@ -163,7 +163,7 @@ def train_bpe(file_path, vocab_size, end_token="<|endoftext|>", num_processes=8,
                     del pair_counts[pair]
                 pair_to_ids[pair].discard(tuple(ids))
 
-            # 新しいペア頻度を増加
+            # 中文注释：请结合相邻代码理解此步骤
             new_counts = count_pairs(new_ids)
             for pair, count in new_counts.items():
                 pair_counts[pair] += count * ids_count
@@ -175,7 +175,7 @@ def train_bpe(file_path, vocab_size, end_token="<|endoftext|>", num_processes=8,
 if __name__ == '__main__':
     vocab_size = 10000
     file_path = "storybot/tiny_stories_train.txt"
-    # 8つのプロセスで並列処理を実行
+    # 中文注释：8
     merge_rules = train_bpe(file_path, vocab_size, num_processes=8)
 
     with open("storybot/merge_rules.pkl", "wb") as f:

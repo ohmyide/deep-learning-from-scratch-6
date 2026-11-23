@@ -198,7 +198,7 @@ class GPT(nn.Module):
         return model
 
 
-# ハイパーパラメータ
+# 中文注释：ー
 vocab_size = 10000
 max_context_len = 256
 embed_dim = 384
@@ -207,10 +207,10 @@ n_layer = 6
 ff_dim = int(embed_dim * 8 / 3)
 theta = 10000
 
-# モデルの初期化
+# 中文注释：请结合相邻代码理解此步骤
 model = GPT(vocab_size, max_context_len, embed_dim, n_head,
             n_layer, ff_dim, theta)
-# 動作テスト
+# 中文注释：请结合相邻代码理解此步骤
 batch_size = 8
 dummy_input = torch.randint(0, vocab_size, (batch_size, max_context_len))
 logits = model(dummy_input)

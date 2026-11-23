@@ -8,7 +8,7 @@ class Attention(nn.Module):
         self.W_q = nn.Linear(embed_dim, key_dim, bias=False)
         self.W_k = nn.Linear(embed_dim, key_dim, bias=False)
         self.W_v = nn.Linear(embed_dim, key_dim, bias=False)
-        self.W_o = nn.Linear(key_dim, embed_dim, bias=False)  # 出力変換行列
+        self.W_o = nn.Linear(key_dim, embed_dim, bias=False)  # 中文注释：请结合相邻代码理解此步骤
         self.key_dim = key_dim
 
     def forward(self, x):
@@ -27,7 +27,7 @@ class Attention(nn.Module):
         weights = F.softmax(scores, dim=-1)
         hidden = torch.matmul(weights, V)
 
-        # 出力変換
+        # 中文注释：请结合相邻代码理解此步骤
         output = self.W_o(hidden)
 
         return output

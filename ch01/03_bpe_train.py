@@ -6,7 +6,7 @@ def count_pairs(ids):
         counts[pair] += 1
     return counts
 
-# 使用例
+# 中文注释：请结合相邻代码理解此步骤
 ids = [1, 2, 3, 1, 2]
 counts = count_pairs(ids)
 print(counts)  # {(1, 2): 2, (2, 3): 1, (3, 1): 1}
@@ -25,41 +25,41 @@ def merge(ids, pair, new_id):
 
     return merged_ids
 
-# 使用例
+# 中文注释：请结合相邻代码理解此步骤
 ids = [1, 2, 3, 1, 2]
 merged = merge(ids, (1, 2), 4)
 print(merged)  # [4, 3, 4]
 
 def train_bpe(text, vocab_size):
-    # テキストを0~255のID列に変換
+    # 中文注释：0~255ID
     ids = list(text.encode("utf-8"))
 
-    # マージ回数を決定
-    num_merges = vocab_size - 256  # 256は初期の語彙サイズ
+    # 中文注释：请结合相邻代码理解此步骤
+    num_merges = vocab_size - 256  # 中文注释：256
     merge_rules = {}
 
     for step in range(num_merges):
-        # 隣接ペアの統計を取得
+        # 中文注释：请结合相邻代码理解此步骤
         counts = count_pairs(ids)
 
-        # ペアが存在しない場合の処理
+        # 中文注释：请结合相邻代码理解此步骤
         if not counts:
             break
 
-        # 最頻出ペアを選択
+        # 中文注释：请结合相邻代码理解此步骤
         best_pair = max(counts, key=counts.get)
         # best_pair = max(counts, key=lambda pair: (counts[pair], pair[0], pair[1]))
 
-        # 新しいトークンIDを割り当て
+        # 中文注释：ID
         new_id = 256 + step
         merge_rules[best_pair] = new_id
 
-        # マージを実行
+        # 中文注释：请结合相邻代码理解此步骤
         ids = merge(ids, best_pair, new_id)
 
     return merge_rules
 
-# 使用例
+# 中文注释：请结合相邻代码理解此步骤
 text = "Hello world! This is BPE training."
 merge_rules = train_bpe(text, vocab_size=260)
 print(merge_rules)  # {(105, 115): 256, (256, 32): 257, (105, 110): 258, (72, 101): 259}

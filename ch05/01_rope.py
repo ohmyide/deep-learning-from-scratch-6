@@ -6,7 +6,7 @@ import torch.nn.functional as F
 class RoPE(nn.Module):
     def __init__(self, theta, key_dim, max_context_len):
         super().__init__()
-        assert key_dim % 2 == 0  # key_dimは偶数
+        assert key_dim % 2 == 0  # 中文注释：key_dim
         half = key_dim // 2
 
         half_ids = torch.arange(0, half)
@@ -24,26 +24,26 @@ class RoPE(nn.Module):
     def forward(self, x):
         batch_size, num_head, context_len, key_dim = x.shape
 
-        # 入力の型を保存し、float32で計算
+        # 中文注释：、float32
         input_dtype = x.dtype
         x = x.float()
 
         cos = self.cos_cache[:context_len]
         sin = self.sin_cache[:context_len]
 
-        # 偶数・奇数インデックスに分割
+        # 中文注释：・
         x_even = x[..., 0::2]
         x_odd  = x[..., 1::2]
 
-        # 回転を適用
+        # 中文注释：请结合相邻代码理解此步骤
         x_rot_even = x_even * cos - x_odd * sin
         x_rot_odd  = x_even * sin + x_odd * cos
 
-        # 偶数・奇数インデックスを元に戻す
+        # 中文注释：・
         out = torch.stack([x_rot_even, x_rot_odd], dim=-1)  # (batch_size, num_head, context_len, key_dim/2, 2)
         out = out.reshape(batch_size, num_head, context_len, key_dim)
 
-        return out.to(input_dtype)  # 元の型に戻す
+        return out.to(input_dtype)  # 中文注释：请结合相邻代码理解此步骤
 
 class MultiHeadAttention(nn.Module):
     def __init__(self, embed_dim, n_head, head_dim, rope=None):
@@ -71,7 +71,7 @@ class MultiHeadAttention(nn.Module):
         K = K.view(B, C, H, D).transpose(1, 2)
         V = V.view(B, C, H, D).transpose(1, 2)
 
-        # RoPEの適用
+        # 中文注释：RoPE
         if self.rope is not None:
             Q = self.rope(Q)
             K = self.rope(K)
@@ -90,22 +90,22 @@ class MultiHeadAttention(nn.Module):
         output = self.W_o(hidden)
         return output
 
-# ハイパーパラメータ
+# 中文注释：ー
 embed_dim = 512
 n_head = 8
 head_dim = 64
 theta = 10000
 max_context_len = 1024
 
-# 初期化
+# 中文注释：请结合相邻代码理解此步骤
 rope = RoPE(theta, head_dim, max_context_len)
 mha = MultiHeadAttention(embed_dim, n_head, head_dim, rope=rope)
 
-# テスト用データ
+# 中文注释：请结合相邻代码理解此步骤
 batch_size = 2
 context_len = 10
 x = torch.randn(batch_size, context_len, embed_dim)
 
-# 順伝播
+# 中文注释：请结合相邻代码理解此步骤
 output = mha(x)
 print(output.shape)  # (2, 10, 512)

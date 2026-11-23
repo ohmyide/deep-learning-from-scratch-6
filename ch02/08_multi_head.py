@@ -2,16 +2,16 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-B = 2   # バッチサイズ（batch_size）
-C = 4   # コンテキスト長（context_len）
-E = 16  # 埋め込みの次元数（embed_dim）
-H = 3   # ヘッド数（n_head）
-D = 8   # ヘッドの次元数（head_dim）
+B = 2   # 中文注释：（batch_size）
+C = 4   # 中文注释：（context_len）
+E = 16  # 中文注释：（embed_dim）
+H = 3   # 中文注释：（n_head）
+D = 8   # 中文注释：（head_dim）
 
-# 入力テンソル
+# 中文注释：请结合相邻代码理解此步骤
 x = torch.randn(B, C, E)
 
-# 効率的な実装：全ヘッド分の重みを一つの行列にまとめる
+# 中文注释：：
 W_q = nn.Linear(E, H*D, bias=False)
 W_k = nn.Linear(E, H*D, bias=False)
 W_v = nn.Linear(E, H*D, bias=False)
@@ -20,7 +20,7 @@ Q = W_q(x)  # (B, C, H*D)
 K = W_k(x)  # (B, C, H*D)
 V = W_v(x)  # (B, C, H*D)
 
-# 形状の変換
+# 中文注释：请结合相邻代码理解此步骤
 Q = Q.view(B, C, H, D).transpose(1, 2)  # (B, H, C, D)
 K = K.view(B, C, H, D).transpose(1, 2)  # (B, H, C, D)
 V = V.view(B, C, H, D).transpose(1, 2)  # (B, H, C, D)
@@ -28,19 +28,19 @@ V = V.view(B, C, H, D).transpose(1, 2)  # (B, H, C, D)
 scores = torch.matmul(Q, K.transpose(-2, -1))  # (B, H, C, C)
 scores = scores / (D ** 0.5)
 
-# マスク処理
+# 中文注释：请结合相邻代码理解此步骤
 mask = torch.tril(torch.ones(C, C, device=scores.device))
 scores = scores.masked_fill(mask == 0, float('-inf'))
 
-# Attention重み
+# 中文注释：Attention
 weights = F.softmax(scores, dim=-1)  # (B, H, C, C)
 hidden = torch.matmul(weights, V)   # (B, H, C, D)
 
-# 形状変換: (B, H, C, D) → (B, C, H*D)
+# 中文注释：: (B, H, C, D) → (B, C, H*D)
 hidden = hidden.transpose(1, 2)  # (B, C, H, D)
 hidden = hidden.contiguous().view(B, C, H*D)  # (B, C, H*D)
 
-# 出力変換: (B, C, H*D) → (B, C, E)
+# 中文注释：: (B, C, H*D) → (B, C, E)
 W_o = nn.Linear(H*D, E, bias=False)
 output = W_o(hidden)  # (B, C, E)
 
@@ -57,20 +57,20 @@ class MultiHeadAttention(nn.Module):
         self.W_v = nn.Linear(E, H*D, bias=False)
         self.W_o = nn.Linear(H*D, E, bias=False)
 
-        # Dropoutを追加
+        # 中文注释：Dropout
         self.attention_dropout = nn.Dropout(dropout_rate)
         self.output_dropout = nn.Dropout(dropout_rate)
 
     def forward(self, x):
-        B, C, E = x.shape  # バッチサイズ、コンテキスト長、埋め込み次元
-        H, D = self.n_head, self.head_dim  # ヘッドサイズ、ヘッドの次元数
+        B, C, E = x.shape  # 中文注释：、、
+        H, D = self.n_head, self.head_dim  # 中文注释：、
 
-        # Q, K, V の計算
+        # 中文注释：Q, K, V
         Q = self.W_q(x)
         K = self.W_k(x)
         V = self.W_v(x)
 
-        # 各ヘッドに分割して並べ替え
+        # 中文注释：请结合相邻代码理解此步骤
         Q = Q.view(B, C, H, D).transpose(1, 2)  # (B, H, C, D)
         K = K.view(B, C, H, D).transpose(1, 2)  # (B, H, C, D)
         V = V.view(B, C, H, D).transpose(1, 2)  # (B, H, C, D)
@@ -78,36 +78,36 @@ class MultiHeadAttention(nn.Module):
         scores = torch.matmul(Q, K.transpose(-2, -1))  # (B, H, C, C)
         scores = scores / (D ** 0.5)
 
-        # マスク処理
+        # 中文注释：请结合相邻代码理解此步骤
         mask = torch.tril(torch.ones(C, C, device=scores.device))
         scores = scores.masked_fill(mask == 0, float('-inf'))
 
-        # Attention重み
+        # 中文注释：Attention
         weights = F.softmax(scores, dim=-1)  # (B, H, C, C)
-        weights = self.attention_dropout(weights)  # weightsにDropout
+        weights = self.attention_dropout(weights)  # 中文注释：weightsDropout
         hidden = torch.matmul(weights, V)  # (B, H, C, D)
 
-        # ヘッドの結合と出力変換
+        # 中文注释：请结合相邻代码理解此步骤
         hidden = hidden.transpose(1, 2).contiguous()  # (B, C, H, D)
         hidden = hidden.view(B, C, H * D)  # (B, C, H*D)
         output = self.W_o(hidden)  # (B, C, E)
-        output = self.output_dropout(output)  # 最終出力にDropout
+        output = self.output_dropout(output)  # 中文注释：Dropout
 
         return output
 
-# 使用例
+# 中文注释：请结合相邻代码理解此步骤
 embed_dim = 512
 n_head = 8
 head_dim = 64
 
 mha = MultiHeadAttention(embed_dim, n_head, head_dim)
 
-# テスト用データ
+# 中文注释：请结合相邻代码理解此步骤
 batch_size = 2
 context_len = 10
 x = torch.randn(batch_size, context_len, embed_dim)
 
-# 実行
+# 中文注释：请结合相邻代码理解此步骤
 output = mha(x)
-print(f"入力形状: {x.shape}")       # (2, 10, 512)
-print(f"出力形状: {output.shape}") # (2, 10, 512)
+print(f"入力形状: {x.shape}")       #  (2, 10, 512)
+print(f"出力形状: {output.shape}") #  (2, 10, 512)

@@ -4,23 +4,23 @@ import torch.nn.functional as F
 
 @torch.no_grad()
 def generate(model, tokenizer, prompt, max_new_tokens=1000, temperature=1.0):
-    model.eval()  # 評価モード
+    model.eval()  # 中文注释：ー
 
-    # ❶ プロンプトをトークン化
-    device = next(model.parameters()).device  # パラメータのデバイスを取得
+    # 中文注释：❶
+    device = next(model.parameters()).device  # 中文注释：请结合相邻代码理解此步骤
     ids = tokenizer.encode(prompt)
     ids = torch.tensor([ids], dtype=torch.long, device=device)
 
-    # 生成されたトークンを保持する変数
+    # 中文注释：请结合相邻代码理解此步骤
     generated_ids = ids.clone()
 
-    # ❷ トークン生成ループ
+    # 中文注释：❷ ー
     for _ in range(max_new_tokens):
-        # コンテキスト長を超えた場合は末尾のみ使用
+        # 中文注释：请结合相邻代码理解此步骤
         if ids.size(1) > model.max_context_len:
             ids = ids[:, -model.max_context_len:]
 
-        # 次のトークンの予測
+        # 中文注释：请结合相邻代码理解此步骤
         logits = model(ids)[:, -1, :]
         if temperature == 0:
             next_id = logits.argmax(dim=-1, keepdim=True)
@@ -28,15 +28,15 @@ def generate(model, tokenizer, prompt, max_new_tokens=1000, temperature=1.0):
             probs = F.softmax(logits / temperature, dim=-1)
             next_id = torch.multinomial(probs, num_samples=1)
 
-        # 終了トークンが生成されたら停止
+        # 中文注释：请结合相邻代码理解此步骤
         if next_id.item() == tokenizer.end_token_id:
             break
 
-        # 生成したトークンを追加
+        # 中文注释：请结合相邻代码理解此步骤
         ids = torch.cat((ids, next_id), dim=1)
         generated_ids = torch.cat((generated_ids, next_id), dim=1)
 
-    # ❸ デコードして返す
+    # 中文注释：❸
     generated_text = tokenizer.decode(generated_ids[0].tolist())
     return generated_text
 

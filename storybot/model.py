@@ -24,11 +24,11 @@ class RoPE(nn.Module):
     def forward(self, x, offset=0):
         batch_size, num_head, context_len, key_dim = x.shape
 
-        # 入力の型を保存し、float32で計算
+        # 中文注释：、float32
         input_dtype = x.dtype
         x = x.float()
 
-        # offsetを考慮して位置エンコーディングを取得
+        # 中文注释：offsetー
         max_context_len = self.cos_cache.size(0)
         if offset + context_len > max_context_len:
             offset = max_context_len - context_len
@@ -45,7 +45,7 @@ class RoPE(nn.Module):
         out = torch.stack([x_rot_even, x_rot_odd], dim=-1)
         out = out.reshape(batch_size, num_head, context_len, key_dim)
 
-        return out.to(input_dtype)  # 元の型に戻す
+        return out.to(input_dtype)  # 中文注释：请结合相邻代码理解此步骤
 
 class MultiHeadAttention(nn.Module):
     def __init__(self, embed_dim, n_head, head_dim, rope=None):
@@ -61,10 +61,10 @@ class MultiHeadAttention(nn.Module):
 
         self.rope = rope
 
-        # KV-Cache用の変数を追加
-        self.k_cache = None  # Keyのキャッシュ
-        self.v_cache = None  # Valueのキャッシュ
-        self.cache_offset = 0  # 現在のキャッシュ位置を追跡
+        # 中文注释：KV-Cache
+        self.k_cache = None  # 中文注释：Key
+        self.v_cache = None  # 中文注释：Value
+        self.cache_offset = 0  # 中文注释：请结合相邻代码理解此步骤
 
     def forward(self, x, use_cache=False):
         B, C, E = x.shape
@@ -78,7 +78,7 @@ class MultiHeadAttention(nn.Module):
         K = K.view(B, C, H, D).transpose(1, 2)
         V = V.view(B, C, H, D).transpose(1, 2)
 
-        # RoPEにoffsetを渡す
+        # 中文注释：RoPEoffset
         if self.rope is not None:
             if use_cache:
                 Q = self.rope(Q, self.cache_offset)
@@ -87,35 +87,35 @@ class MultiHeadAttention(nn.Module):
                 Q = self.rope(Q)
                 K = self.rope(K)
 
-        # KV-Cacheの処理
+        # 中文注释：KV-Cache
         if use_cache:
-            # Prefill（初回）かDecode（2回目以降）かを判定
+            # 中文注释：Prefill（）Decode（2）
             is_first_call = (self.k_cache is None)
 
             if is_first_call:
-                # 初回:キャッシュを初期化
+                # 中文注释：:
                 self.k_cache = K
                 self.v_cache = V
             else:
-                # 2回目以降:新しいKeyとValueをキャッシュに追加
+                # 中文注释：2:KeyValue
                 self.k_cache = torch.cat([self.k_cache, K], dim=2)
                 self.v_cache = torch.cat([self.v_cache, V], dim=2)
 
-            # オフセットを更新(次のトークンの位置へ)
+            # 中文注释：()
             self.cache_offset += C
 
-            # キャッシュされた全てのKeyとValueを使用
+            # 中文注释：KeyValue
             K = self.k_cache
             V = self.v_cache
 
-        # 通常のAttention計算
+        # 中文注释：Attention
         scores = torch.matmul(Q, K.transpose(-2, -1))
         scores = scores / (D ** 0.5)
 
-        # Causal Maskの適用
-        # - 学習時（use_cache=False）: 常に適用
-        # - Prefill（初回・プロンプト全体処理）: 適用（各トークンは前方のみ）
-        # - Decode（2回目以降・1トークン生成）: 不要（新トークンは全キャッシュにattend）
+        # 中文注释：Causal Mask
+        # 中文注释：- （use_cache=False）:
+        # 中文注释：- Prefill（・）: （）
+        # 中文注释：- Decode（2・1）: （attend）
         if not use_cache or (use_cache and is_first_call):
             mask = torch.tril(torch.ones(C, C, device=scores.device))
             scores = scores.masked_fill(mask == 0, float('-inf'))
@@ -129,7 +129,7 @@ class MultiHeadAttention(nn.Module):
         return output
 
     def clear_cache(self):
-        """キャッシュをクリアする"""
+        """清空缓存。"""
         self.k_cache = None
         self.v_cache = None
         self.cache_offset = 0
@@ -170,7 +170,7 @@ class Block(nn.Module):
         return x
 
     def clear_cache(self):
-        """キャッシュをクリアする"""
+        """清空缓存。"""
         self.attn.clear_cache()
 
 
@@ -261,10 +261,10 @@ if __name__ == "__main__":
     ff_dim = int(embed_dim * 8 / 3)
     theta = 10000
 
-    # モデルを作成
+    # 中文注释：请结合相邻代码理解此步骤
     model = GPT(vocab_size, max_context_len, embed_dim, n_head,
                 n_layer, ff_dim, theta)
-    # 動作テスト
+    # 中文注释：请结合相邻代码理解此步骤
     dummy_input = torch.randint(0, vocab_size, (1, max_context_len))
     logits = model(dummy_input)
     print(f"出力形状: {logits.shape}")

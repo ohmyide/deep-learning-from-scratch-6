@@ -32,49 +32,49 @@ def merge(ids, pair, new_id):
     return merged_ids
 
 def train_bpe(input_text, vocab_size, end_token="<|endoftext|>"):
-    # 特殊トークンで分割
+    # 中文注释：请结合相邻代码理解此步骤
     texts = input_text.split(end_token)
 
-    # 各テキスト片を事前トークン化
+    # 中文注释：请结合相邻代码理解此步骤
     pretoken_counts = defaultdict(int)
-    for text in tqdm(texts, desc="Pretokenizing"):  # 進捗表示のためtqdmを使用
+    for text in tqdm(texts, desc="Pretokenizing"):  # 中文注释：tqdm
         for pretoken in pretokenize(text):
             pretoken_counts[pretoken] += 1
 
-    # 事前トークンをID列に変換
+    # 中文注释：ID
     ids_counts = {tuple(pretoken.encode("utf-8")): count for pretoken, count in pretoken_counts.items()}
 
     num_merges = vocab_size - 256 - 1
     merge_rules = {}
 
     for step in tqdm(range(num_merges), desc="Training BPE"):
-        # 各ids列について、その出現回数を考慮してペア頻度を集計
+        # 中文注释：ids、
         pair_counts = defaultdict(int)
         for ids, count in ids_counts.items():
             count_pairs(ids, count, pair_counts)
 
-        # ペアが存在しない場合の処理
+        # 中文注释：请结合相邻代码理解此步骤
         if not pair_counts:
             break
 
-        # 最頻出ペアを選択
+        # 中文注释：请结合相邻代码理解此步骤
         # best_pair = max(pair_counts, key=pair_counts.get)
         best_pair = max(pair_counts, key=lambda pair: (pair_counts[pair], pair[0], pair[1]))
 
         new_id = 256 + step
         merge_rules[best_pair] = new_id
 
-        # 各ids列をマージして更新
+        # 中文注释：ids
         new_ids_counts = defaultdict(int)
         for ids, count in ids_counts.items():
-            new_ids = merge(ids, best_pair, new_id)  # マージを適用
+            new_ids = merge(ids, best_pair, new_id)  # 中文注释：请结合相邻代码理解此步骤
             new_ids_counts[tuple(new_ids)] += count
         ids_counts = new_ids_counts
 
     return merge_rules
 
 
-vocab_size = 1000  # 語彙サイズの設定
+vocab_size = 1000  # 中文注释：请结合相邻代码理解此步骤
 file_path = "codebot/tiny_codes.txt"
 text = open(file_path).read()
 merge_rules = train_bpe(text, vocab_size)

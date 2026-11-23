@@ -12,13 +12,13 @@ from tqdm import tqdm
 from codebot.model import GPT
 from codebot.utils import get_device
 
-# 設定
+# 中文注释：请结合相邻代码理解此步骤
 device = get_device()
 data_path = 'codebot/tiny_codes.bin'
 tokenizer_path = 'codebot/merge_rules.pkl'
 model_save_path = 'codebot/model_pretrain.pt'
 
-# ハイパーパラメータ
+# 中文注释：ー
 context_len = 256
 vocab_size = 1000
 batch_size = 32
@@ -30,7 +30,7 @@ n_layer = 6
 ff_dim = 4 * embed_dim
 dropout_rate = 0.1
 
-# データセットクラス
+# 中文注释：请结合相邻代码理解此步骤
 class TokenDataset(Dataset):
     def __init__(self, tokens, context_len):
         self.tokens = torch.tensor(tokens, dtype=torch.long)
@@ -44,12 +44,12 @@ class TokenDataset(Dataset):
         y = self.tokens[idx+1:idx+self.context_len+1]
         return x, y
 
-# データ準備
+# 中文注释：请结合相邻代码理解此步骤
 ids = np.fromfile(data_path, dtype=np.uint16)
 dataset = TokenDataset(ids, context_len)
 dataloader = DataLoader(dataset, batch_size=batch_size, shuffle=True)
 
-# モデル、オプティマイザ
+# 中文注释：、
 model = GPT(
     vocab_size=vocab_size,
     max_context_len=context_len,
@@ -65,7 +65,7 @@ total_params = sum(p.numel() for p in model.parameters())
 print(f"パラメータ数: {total_params:,} ({total_params/1e6:.1f}M)")
 
 losses = []
-data_iter = cycle(dataloader)  # 無限ループ化
+data_iter = cycle(dataloader)  # 中文注释：ー
 pbar = tqdm(range(max_iters))
 
 for i in pbar:
@@ -82,7 +82,7 @@ for i in pbar:
     losses.append(loss.item())
     pbar.set_postfix({'loss': f'{loss.item():.4f}'})
 
-# 結果を保存
+# 中文注释：请结合相邻代码理解此步骤
 plt.figure(figsize=(10, 6))
 plt.plot(losses)
 plt.xlabel('Iteration')

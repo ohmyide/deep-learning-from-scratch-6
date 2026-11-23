@@ -4,7 +4,7 @@ from tqdm import tqdm
 
 
 def pretokenize(text):
-    # GPT-2で使用されている正規表現パターン
+    # 中文注释：GPT-2ー
     pattern = r"""'(?:[sdmt]|ll|ve|re)| ?\p{L}+| ?\p{N}+| ?[^\s\p{L}\p{N}]+|\s+(?!\S)|\s+"""
     return re.findall(pattern, text)
 
@@ -29,20 +29,20 @@ def merge(ids, pair, new_id):
     return merged_ids
 
 def train_bpe(input_text, vocab_size, end_token="<|endoftext|>"):
-    # ステップ1: 特殊トークンで分割
+    # 中文注释：1:
     texts = input_text.split(end_token)
 
-    # ステップ2: 各テキスト片を事前トークン化
+    # 中文注释：2:
     ids_list = []
     for text in texts:
-        for pretoken in pretokenize(text):  # 事前トークン化
-            ids_list.append(list(pretoken.encode("utf-8")))  # ID列に変換
+        for pretoken in pretokenize(text):  # 中文注释：请结合相邻代码理解此步骤
+            ids_list.append(list(pretoken.encode("utf-8")))  # 中文注释：ID
 
-    # ==== 残りは元のコードと同じ（ただしtqdmを追加） ====
+    # 中文注释：==== ー（tqdm） ====
     num_merges = vocab_size - 256 - 1
     merge_rules = {}
 
-    for step in tqdm(range(num_merges), desc="Training BPE"):  # tqdmで進捗表示
+    for step in tqdm(range(num_merges), desc="Training BPE"):  # 中文注释：tqdm
         counts = defaultdict(int)
         for ids in ids_list:
             counts = count_pairs(ids, counts)
@@ -86,14 +86,14 @@ class BPETokenizer:
         texts = re.split(pattern, input_text)
         all_ids = []
 
-        # show_progressがTrueならtqdmで進捗表示
+        # 中文注释：show_progressTruetqdm
         texts = tqdm(texts, desc="Encoding") if show_progress else texts
 
         for text in texts:
             if text == self.end_token:
                 all_ids.append(self.end_token_id)
             else:
-                # 各事前トークンをBPEエンコード
+                # 中文注释：BPE
                 for pretoken in pretokenize(text):
                     ids = self._encode_text(pretoken)
                     all_ids.extend(ids)
@@ -106,13 +106,13 @@ class BPETokenizer:
         text = text_bytes.decode("utf-8", errors="replace")
         return text
 
-# 事前トークン化対応のBPE学習
+# 中文注释：BPE
 sample_text = "Say hello! Why hello? Just hello.<|endoftext|>Good morning!"
 
 merge_rules = train_bpe(sample_text, vocab_size=270)
 tokenizer = BPETokenizer(merge_rules)
 
-# エンコード/デコード
+# 中文注释：/
 text = "Say hello!"
 ids = tokenizer.encode(text)
 decoded = tokenizer.decode(ids)
@@ -120,6 +120,6 @@ decoded = tokenizer.decode(ids)
 print(ids)
 print(decoded)
 
-# 各トークンIDをデコードして確認
+# 中文注释：ID
 for token_id in ids:
     print(f"{token_id} -> '{tokenizer.decode([token_id])}'")

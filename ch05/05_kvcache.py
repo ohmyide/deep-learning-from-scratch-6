@@ -28,7 +28,7 @@ class RoPE(nn.Module):
         input_dtype = x.dtype
         x = x.float()
 
-        # offsetを考慮して位置エンコーディングを取得
+        # 中文注释：offsetー
         max_context_len = self.cos_cache.size(0)
         if offset + context_len > max_context_len:
             offset = max_context_len - context_len
@@ -62,10 +62,10 @@ class MultiHeadAttention(nn.Module):
 
         self.rope = rope
 
-        # KV-Cache用の変数を追加
-        self.k_cache = None  # Keyのキャッシュ
-        self.v_cache = None  # Valueのキャッシュ
-        self.cache_offset = 0  # 現在のキャッシュ位置を追跡
+        # 中文注释：KV-Cache
+        self.k_cache = None  # 中文注释：Key
+        self.v_cache = None  # 中文注释：Value
+        self.cache_offset = 0  # 中文注释：请结合相邻代码理解此步骤
 
     def forward(self, x, use_cache=False):
         B, C, E = x.shape
@@ -79,7 +79,7 @@ class MultiHeadAttention(nn.Module):
         K = K.view(B, C, H, D).transpose(1, 2)
         V = V.view(B, C, H, D).transpose(1, 2)
 
-        # RoPEにoffsetを渡す
+        # 中文注释：RoPEoffset
         if self.rope is not None:
             if use_cache:
                 Q = self.rope(Q, self.cache_offset)
@@ -88,32 +88,32 @@ class MultiHeadAttention(nn.Module):
                 Q = self.rope(Q)
                 K = self.rope(K)
 
-        # KV-Cacheの処理
+        # 中文注释：KV-Cache
         if use_cache:
-            # Prefill（初回）かDecode（2回目以降）かを判定
+            # 中文注释：Prefill（）Decode（2）
             is_first_call = (self.k_cache is None)
 
             if is_first_call:
-                # 初回:キャッシュを初期化
+                # 中文注释：:
                 self.k_cache = K
                 self.v_cache = V
             else:
-                # 2回目以降:新しいKeyとValueをキャッシュに追加
+                # 中文注释：2:KeyValue
                 self.k_cache = torch.cat([self.k_cache, K], dim=2)
                 self.v_cache = torch.cat([self.v_cache, V], dim=2)
 
-            # オフセットを更新(次のトークンの位置へ)
+            # 中文注释：()
             self.cache_offset += C
 
-            # キャッシュされた全てのKeyとValueを使用
+            # 中文注释：KeyValue
             K = self.k_cache
             V = self.v_cache
 
-        # 通常のAttention計算
+        # 中文注释：Attention
         scores = torch.matmul(Q, K.transpose(-2, -1))
         scores = scores / (D ** 0.5)
 
-        # Causal Mask（KVキャッシュ使用時は不要）
+        # 中文注释：Causal Mask（KV）
         if not use_cache or is_first_call:
             mask = torch.tril(torch.ones(C, C, device=scores.device))
             scores = scores.masked_fill(mask == 0, float('-inf'))
@@ -127,7 +127,7 @@ class MultiHeadAttention(nn.Module):
         return output
 
     def clear_cache(self):
-        """キャッシュをクリアする"""
+        """清空缓存。"""
         self.k_cache = None
         self.v_cache = None
         self.cache_offset = 0
@@ -168,7 +168,7 @@ class Block(nn.Module):
         return x
 
     def clear_cache(self):
-        """キャッシュをクリアする"""
+        """清空缓存。"""
         self.attn.clear_cache()
 
 
@@ -247,7 +247,7 @@ class GPT(nn.Module):
         return model
 
     def clear_cache(self):
-        """全てのブロックのキャッシュをクリアする"""
+        """清空所有 Transformer 块的缓存。"""
         for block in self.blocks:
             block.clear_cache()
 
@@ -255,13 +255,13 @@ class GPT(nn.Module):
 def generate_without_cache(model, start_ids, max_new_tokens):
     model.eval()
 
-    ids = start_ids  # 最初のトークン
+    ids = start_ids  # 中文注释：请结合相邻代码理解此步骤
     with torch.no_grad():
         for _ in range(max_new_tokens):
-            # 毎回、全てのトークンを渡す
+            # 中文注释：、
             logits = model(ids, use_cache=False)
             next_id = torch.argmax(logits[:, -1, :], dim=-1, keepdim=True)
-            # 新しいトークンを連結
+            # 中文注释：请结合相邻代码理解此步骤
             ids = torch.cat([ids, next_id], dim=1)
 
     return ids
@@ -269,11 +269,11 @@ def generate_without_cache(model, start_ids, max_new_tokens):
 def generate_with_cache(model, start_ids, max_new_tokens):
     model.eval()
 
-    ids = start_ids  # 最初のトークン
+    ids = start_ids  # 中文注释：请结合相邻代码理解此步骤
     next_id = start_ids
     with torch.no_grad():
         for _ in range(max_new_tokens):
-            # 1トークンずつ生成
+            # 中文注释：1
             logits = model(next_id, use_cache=True)
             next_id = torch.argmax(logits[:, -1, :], dim=-1, keepdim=True)
             ids = torch.cat([ids, next_id], dim=1)
@@ -293,12 +293,12 @@ def measure_generation_time(model, start_ids, use_cache, num_tokens=200):
     elapsed = time.time() - start_time
     return elapsed
 
-# テスト
+# 中文注释：请结合相邻代码理解此步骤
 model = GPT(vocab_size=1000, max_context_len=256, embed_dim=384,
             n_head=6, n_layer=6, ff_dim=1024)
 
 
-start_ids = torch.tensor([[42]])  # 固定シード
+start_ids = torch.tensor([[42]])  # 中文注释：请结合相邻代码理解此步骤
 
 time_without = measure_generation_time(model, start_ids, use_cache=False)
 time_with = measure_generation_time(model, start_ids, use_cache=True)
@@ -310,20 +310,20 @@ print(f"高速化率: {time_without / time_with:.1f}倍")
 print("\n=== 出力の一致確認 ===")
 model.clear_cache()
 
-# 同じ開始トークンで生成
+# 中文注释：请结合相邻代码理解此步骤
 
-# KV-Cacheなしで生成
+# 中文注释：KV-Cache
 output_without = generate_without_cache(model, start_ids, max_new_tokens=max_new_tokens)
 print(f"KV-Cacheなし: {output_without[0, :11].tolist()}")
 
-# KV-Cacheありで生成
+# 中文注释：KV-Cache
 model.clear_cache()
 output_with = generate_with_cache(model, start_ids, max_new_tokens=max_new_tokens)
 
 print(f"KV-Cacheあり: {output_with[0, :11].tolist()}")
 
 print(output_with.shape, output_without.shape)
-# 一致確認
+# 中文注释：请结合相邻代码理解此步骤
 if torch.equal(output_without[:, :max_new_tokens], output_with[:, :max_new_tokens]):
     print("✓ 出力が一致しました!")
 else:

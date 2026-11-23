@@ -13,14 +13,14 @@ from codebot.model import GPT
 from codebot.tokenizer import BPETokenizer
 from codebot.utils import get_device
 
-# 設定
+# 中文注释：请结合相邻代码理解此步骤
 device = get_device()
 data_path = 'codebot/tiny_codes_sft.json'
 tokenizer_path = 'codebot/merge_rules.pkl'
 pretrain_model_path = 'codebot/model_pretrain.pt'
 sft_model_save_path = 'codebot/model_sft.pt'
 
-# ハイパーパラメータ
+# 中文注释：ー
 context_len = 256
 batch_size = 32
 learning_rate = 3e-4
@@ -40,26 +40,26 @@ class SFTDataset(Dataset):
             self.samples.append((ids, labels))
 
     def _create_sample(self, instruction, response):
-        # プロンプトとレスポンスをフォーマット
+        # 中文注释：ー
         prompt = f"### Instruction:\n{instruction}\n\n### Response:\n"
         response = f"{response}<|endoftext|>"
 
-        # トークン化
+        # 中文注释：请结合相邻代码理解此步骤
         prompt_ids = self.tokenizer.encode(prompt)
         response_ids = self.tokenizer.encode(response)
 
-        # 入力系列とラベルの作成（プロンプト部分は-100でマスク）
+        # 中文注释：（-100）
         ids = prompt_ids + response_ids
         labels = [-100] * len(prompt_ids) + response_ids
 
-        # 言語モデル用にシフト（入力と正解を1つずらす）
+        # 中文注释：（1）
         ids = ids[:-1]
         labels = labels[1:]
 
-        # context_lenに合わせてパディングまたは切り詰め
+        # 中文注释：context_len
         pad_len = self.context_len - len(ids)
         if pad_len > 0:
-            ids = ids + [0] * pad_len  # パディングIDとして0を使用
+            ids = ids + [0] * pad_len  # 中文注释：ID0
             labels = labels + [-100] * pad_len
         elif pad_len < 0:
             ids = ids[:self.context_len]
@@ -76,16 +76,16 @@ class SFTDataset(Dataset):
                torch.tensor(labels, dtype=torch.long)
 
 
-# トークナイザとデータセットの準備
+# 中文注释：ー
 tokenizer = BPETokenizer.load_from(tokenizer_path)
 dataset = SFTDataset(data_path, tokenizer, context_len)
 dataloader = DataLoader(dataset, batch_size=batch_size, shuffle=True)
 
-# モデルとオプティマイザ
+# 中文注释：请结合相邻代码理解此步骤
 model = GPT.load_from(pretrain_model_path, device=device)
 optimizer = torch.optim.AdamW(model.parameters(), lr=learning_rate)
 
-# 学習ループ
+# 中文注释：ー
 losses = []
 data_iter = cycle(dataloader)
 pbar = tqdm(range(max_iters))
@@ -108,7 +108,7 @@ for i in pbar:
     losses.append(loss.item())
     pbar.set_postfix({'loss': f'{loss.item():.4f}'})
 
-# 結果を保存
+# 中文注释：请结合相邻代码理解此步骤
 plt.figure(figsize=(10, 6))
 plt.plot(losses)
 plt.xlabel('Iteration')
@@ -116,5 +116,5 @@ plt.ylabel('Loss')
 plt.grid(True)
 plt.savefig('loss_sft.png')
 
-# モデルの保存
+# 中文注释：请结合相邻代码理解此步骤
 model.save(sft_model_save_path)

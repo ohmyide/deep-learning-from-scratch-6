@@ -22,7 +22,7 @@ print('scaled dot product:', scaled_dot_product)
 
 
 d = 10
-num_samples = 10000  # 先ほどの内積の計算を10000回行う
+num_samples = 10000  # 中文注释：10000
 
 dot_products = []
 scaled_dot_products = []
@@ -38,7 +38,7 @@ for _ in range(num_samples):
     scaled_dot_products.append(scaled_dot_product)
 
 
-# 結果をプロット
+# 中文注释：请结合相邻代码理解此步骤
 plt.figure(figsize=(10, 6))
 plt.hist(dot_products, bins=50, alpha=0.5, label='Without scaling')
 plt.hist(scaled_dot_products, bins=50, alpha=0.5, label='With scaling')

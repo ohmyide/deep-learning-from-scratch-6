@@ -20,8 +20,8 @@ for token_id in range(990, 1000):
     print(f"  ID {token_id}: '{text}'")
 
 
-# 圧縮率を測定
-sample_text = open("codebot/tiny_codes.txt").read()[:10000]  # 最初の10000文字
+# 中文注释：请结合相邻代码理解此步骤
+sample_text = open("codebot/tiny_codes.txt").read()[:10000]  # 中文注释：10000
 
 byte_count = len(sample_text.encode("utf-8"))
 ids = tokenizer.encode(sample_text)
@@ -34,7 +34,7 @@ print(f"トークン数: {ids_count:,}")
 print(f"圧縮率: {compression_ratio:.2f}倍（平均 {compression_ratio:.2f} バイト/トークン）")
 
 
-# ==== 以下はGPT系モデルのエンコードと圧縮率比較（tiktoken使用） ====
+# 中文注释：==== GPT（tiktoken） ====
 """
 import tiktoken
 
